@@ -1,0 +1,50 @@
+pipeline {
+    agent any
+    
+    stages {
+        stage('Get Code') {
+            steps {
+                echo 'me voy a traer el codigo'
+                //obtener codigo del repo
+                git 'https://github.com/4ndreyVillada/Andrey-unir.git'
+                bat 'dir'
+                echo WORKSPACE
+            }
+        }   
+        
+        stage ('Build') {
+            steps {
+                echo 'NO HAY QUE COMPILAR NADA. ES PYTHON'
+            }
+        }
+        
+        stage('Tests') {
+            parallel {
+                stage('Unit') {
+                    steps {
+                        bat '''
+                            set PYTHONPATH=%WORKSPACE%
+                            pytest --junitxml=result-unit.xml test\\unit
+                        '''
+                    }
+                }
+                stage('Rest') {
+                    steps {
+                        bat '''
+                            set FLASK_APP=app\\api.py
+                            set FLASK_ENV=development
+                            start flask run
+                            start java -jar C:\\Users\\andre\\Documents\\UNIR\\wiremock\\wiremock-standalone-3.13.0.jar --port 9090 --root-dir C:\\Users\\andre\\Documents\\UNIR\\wiremock
+                            set PYTHONPATH=.
+                            pytest --junitxml=result-rest.xml test\\rest
+                        '''
+                    }
+                }
+            }
+        }
+        
+        stage('Result') {
+            steps {
+                junit 'result*.xml'
+            }
+        }
