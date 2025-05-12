@@ -1,0 +1,64 @@
+pipeline {
+    agent none
+
+    stages {
+        stage('Get Code') {
+            agent { label 'agente1' }
+            steps {
+                echo 'Clonando el repositorio...'
+                bat 'whoami'
+                bat 'hostname'
+                git 'https://github.com/4ndreyVillada/Andrey-unir.git'
+                stash name: 'codigo', includes: '**'
+            }
+        }
+
+        stage('Build') {
+            agent { label 'agente2' }
+            steps {
+                echo 'NO HAY QUE COMPILAR NADA. ES PYTHON'
+                bat 'whoami'
+                bat 'hostname'
+                unstash 'codigo'
+            }
+        }
+
+        stage('Tests') {
+            agent { label 'agente3' }
+            steps {
+                echo 'Ejecutando pruebas...'
+                bat 'whoami'
+                bat 'hostname'
+                unstash 'codigo'
+                
+                bat '''
+                    set PYTHONPATH=%WORKSPACE%
+                    pytest --junitxml=result-unit.xml test\\unit
+                '''
+                stash name: 'result-unit', includes: 'result-unit.xml'
+
+                bat '''
+                    set FLASK_APP=app\\api.py
+                    set FLASK_ENV=development
+                    start flask run
+                    start java -jar C:\\Users\\andre\\Documents\\UNIR\\wiremock\\wiremock-standalone-3.13.0.jar --port 9090 --root-dir C:\\Users\\andre\\Documents\\UNIR\\wiremock
+                    set PYTHONPATH=.
+                    pytest --junitxml=result-rest.xml test\\rest
+                '''
+                stash name: 'result-rest', includes: 'result-rest.xml'
+            }
+        }
+
+        stage('Result') {
+            agent { label 'agente1' }
+            steps {
+                echo 'Recopilando resultados...'
+                bat 'whoami'
+                bat 'hostname'
+                unstash 'result-unit'
+                unstash 'result-rest'
+                junit 'result*.xml'
+            }
+        }
+    }
+}
