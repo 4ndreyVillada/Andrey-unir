@@ -30,11 +30,10 @@ pipeline {
                         catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
                             unstash name:'code'
                             bat '''
-                                ls -la
-                                export PYTHONPATH=${WORKSPACE}
-                                /home/agent1/.local/bin/pytest --junitxml=result-unit.xml test/unit
+		                set PYTHONPATH=%WORKSPACE%
+		                pytest --junitxml=result-unit.xml test\\unit
                             '''
-                            stash name:'unit-res', includes:'result-unit.xml'
+                            stash name:'resul-unit', includes:'result-unit.xml'
                        }
                     }
                 }   
@@ -46,20 +45,14 @@ pipeline {
                       catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
                         unstash name:'code'
                         bat '''
-                            export FLASK_APP=app/api.py                          
-                            /home/agent2/.local/bin/flask run &
-
-                            sleep 4
-
-                            java -jar /home/agent2/wiremock/wiremock-standalone-3.3.1.jar --port 9090 --root-dir /home/agent2/wiremock &
-                            export PYTHONPATH=${WORKSPACE}
-                            
-                            sleep 15
-                            
-                            /home/agent2/.local/bin/pytest --junitxml=result-rest.xml test/rest
-                        '''
-                      }
-                      stash name:'rest-res', includes:'result-rest.xml'
+                            set FLASK_APP=app\\api.py
+                  	    set FLASK_ENV=development
+                  	    start flask run
+                  	    start java -jar C:\\Users\\andre\\Documents\\UNIR\\wiremock\\wiremock-standalone-3.13.0.jar --port 9090 --root-dir C:\\Users\\andre\\Documents\\UNIR\\wiremock
+                  	    set PYTHONPATH=.
+                  	    pytest --junitxml=result-rest.xml test\\rest
+               		'''
+                        stash name: 'result-rest', includes: 'result-rest.xml'
                     }    
                 }                
                 
@@ -68,8 +61,8 @@ pipeline {
 
         stage('Results') {
             steps {
-                unstash name:'unit-res'
-                unstash name:'rest-res'
+                unstash name:'resul-unit'
+                unstash name:'result-rest'
                 junit 'result*.xml' 
             }
         }
