@@ -1,5 +1,5 @@
 pipeline {
-    agent any
+    agent none
 
     options { skipDefaultCheckout() }
 
@@ -25,11 +25,11 @@ pipeline {
             parallel
             {
                 stage('Unit') {
-                    agent {label 'agent1'}
+                    agent {label 'agente2'}
                     steps {
                         catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
                             unstash name:'code'
-                            sh '''
+                            bat '''
                                 ls -la
                                 export PYTHONPATH=${WORKSPACE}
                                 /home/agent1/.local/bin/pytest --junitxml=result-unit.xml test/unit
@@ -41,11 +41,11 @@ pipeline {
                 
                 
                 stage('Rest') {
-                    agent {label 'agent2'}
+                    agent {label 'agente3'}
                     steps {
                       catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
                         unstash name:'code'
-                        sh '''
+                        bat '''
                             export FLASK_APP=app/api.py                          
                             /home/agent2/.local/bin/flask run &
 
