@@ -7,7 +7,7 @@ pipeline {
         stage('Get Code') {
             steps {
                 // Obtener código del repo
-                git 'git@github.com:4ndreyVillada/Andrey-unir.git'
+                git 'https://github.com/4ndreyVillada/Andrey-unir'
 	            echo WORKSPACE
                 bat 'dir'
                 stash name:'code', includes:'**'
